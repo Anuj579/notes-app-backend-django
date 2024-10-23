@@ -10,14 +10,16 @@ from django.db.models import Q
 @api_view(['GET'])
 def search_notes_view(request):
     query = request.query_params.get('search')
-    notes = Note.objects.filter(Q(title__icontains = query) | Q(body__icontains = query) | Q(category__icontains = query))
+    notes = Note.objects.filter(Q(title__icontains = query) | Q(body__icontains = query) | Q(category__icontains = query)).order_by('-updated_at')
     serializer = NoteSerializer(notes, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    if notes:
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 @api_view(['GET', 'POST'])
 def notes_view(request):
     if request.method == 'GET':
-        notes = Note.objects.all()
+        notes = Note.objects.all().order_by('-updated_at')
         serializer = NoteSerializer(notes, many = True)
         return Response(serializer.data)
     elif request.method == 'POST':

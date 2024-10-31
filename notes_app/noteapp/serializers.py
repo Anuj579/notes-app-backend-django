@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from .models import Note
 from django.contrib.auth.models import User
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 
@@ -21,7 +20,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         if User.objects.filter(email=validated_data["email"]).exists():
             raise serializers.ValidationError({"message": "Email already exists"})
-        
+
         user = User(
             first_name=validated_data["first_name"],
             last_name=validated_data["last_name"],
@@ -53,4 +52,3 @@ class LoginSerializer(serializers.Serializer):
             "refresh": str(refresh),
             "access": str(refresh.access_token),
         }
-        

@@ -3,7 +3,7 @@ from noteapp.serializers import (
     RegisterSerializer,
     LoginSerializer,
 )
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 from noteapp.models import Note
 from rest_framework.response import Response
@@ -33,6 +33,20 @@ def login_view(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def logout_view(request):
+    try:
+        refresh_token = request.data["refresh"]
+        token = RefreshToken(refresh_token)
+        token.blacklist()
+        return Response(
+            {"message": "Logout successfully"}, status=status.HTTP_205_RESET_CONTENT
+        )
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def search_notes_view(request):
@@ -49,6 +63,7 @@ def search_notes_view(request):
 
 
 @api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
 def notes_view(request):
     if request.method == "GET":
         notes = Note.objects.all().order_by("-updated_at")
@@ -57,24 +72,33 @@ def notes_view(request):
     elif request.method == "POST":
         serializer = NoteSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(user=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["GET", "PUT", "DELETE"])
+@permission_classes([IsAuthenticated])
 def note_detail_view(request, slug):
     try:
         note = Note.objects.get(slug=slug)
     except Note.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response(
+            {"error": "Note not found"}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    if note.user != request.user:
+        return Response(
+            {"error": "Not authorized to access this note"},
+            status=status.HTTP_403_FORBIDDEN,
+        )
 
     if request.method == "GET":
         serializer = NoteSerializer(note)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     elif request.method == "PUT":
-        serializer = NoteSerializer(note, data=request.data)
+        serializer = NoteSerializer(note, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -82,4 +106,4 @@ def note_detail_view(request, slug):
 
     elif request.method == "DELETE":
         note.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"message": "Note deleted successfully"},status=status.HTTP_204_NO_CONTENT)

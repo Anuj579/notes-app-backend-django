@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "noteapp",
     "rest_framework",
     "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist", 
     "corsheaders",  # Install django cors headers and then do few configuration like this and in middleware and add domains which can access the API
 ]
 

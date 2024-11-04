@@ -1,5 +1,6 @@
 from noteapp.serializers import (
     NoteSerializer,
+    UserSerializer,
     RegisterSerializer,
     LoginSerializer,
 )
@@ -31,6 +32,17 @@ def login_view(request):
         tokens = serializer.validated_data
         return Response(tokens, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_user_profile_view(request):
+    try:
+        user = request.user
+        serializer = UserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
@@ -83,9 +95,7 @@ def note_detail_view(request, slug):
     try:
         note = Note.objects.get(slug=slug)
     except Note.DoesNotExist:
-        return Response(
-            {"error": "Note not found"}, status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({"error": "Note not found"}, status=status.HTTP_404_NOT_FOUND)
 
     if note.user != request.user:
         return Response(
@@ -106,4 +116,6 @@ def note_detail_view(request, slug):
 
     elif request.method == "DELETE":
         note.delete()
-        return Response({"message": "Note deleted successfully"},status=status.HTTP_204_NO_CONTENT)
+        return Response(
+            {"message": "Note deleted successfully"}, status=status.HTTP_204_NO_CONTENT
+        )

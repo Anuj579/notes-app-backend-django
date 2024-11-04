@@ -11,6 +11,12 @@ class NoteSerializer(serializers.ModelSerializer):
         fields = ["id", "title", "body", "slug", "category", "created_at", "updated_at"]
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["first_name", "last_name", "username", "email"]
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

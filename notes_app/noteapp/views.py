@@ -78,7 +78,7 @@ def search_notes_view(request):
 @permission_classes([IsAuthenticated])
 def notes_view(request):
     if request.method == "GET":
-        notes = Note.objects.all().order_by("-updated_at")
+        notes = Note.objects.filter(user=request.user).order_by("-updated_at")
         serializer = NoteSerializer(notes, many=True)
         return Response(serializer.data)
     elif request.method == "POST":

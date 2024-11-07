@@ -63,15 +63,21 @@ def logout_view(request):
 @permission_classes([IsAuthenticated])
 def search_notes_view(request):
     query = request.query_params.get("search")
+    if not query:
+        return Response(
+            {"error": "Search query is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    
     notes = Note.objects.filter(
         Q(title__icontains=query)
         | Q(body__icontains=query)
-        | Q(category__icontains=query)
+        | Q(category__icontains=query),
+        user=request.user,
     ).order_by("-updated_at")
     serializer = NoteSerializer(notes, many=True)
     if notes:
         return Response(serializer.data, status=status.HTTP_200_OK)
-    return Response(status=status.HTTP_204_NO_CONTENT)
+    return Response({"message": "No notes found"}, status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(["GET", "POST"])

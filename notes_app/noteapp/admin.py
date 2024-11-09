@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Note
+from .models import Note, Profile
 
 # Register your models here.
 
@@ -9,3 +9,4 @@ class NoteAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Note, NoteAdmin)
+admin.site.register(Profile)

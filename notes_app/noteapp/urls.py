@@ -5,7 +5,8 @@ from noteapp.views import (
     search_notes_view,
     register_view,
     login_view,
-    get_user_profile_view,
+    user_details_view,
+    profile_view,
     logout_view,
 )
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -14,7 +15,8 @@ urlpatterns = [
     path("register/", register_view, name="register"),
     path("login/", login_view, name="login"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-    path("user-details/", get_user_profile_view, name="user_profile"),
+    path("user-details/", user_details_view, name="user_profile"),
+    path("profile/", profile_view, name="profile"),
     path("logout/", logout_view, name="logout"),
     path("notes/", notes_view, name="notes"),
     path("notes/<slug:slug>/", note_detail_view, name="note_detail"),

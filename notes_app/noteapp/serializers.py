@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Note
+from .models import Note, Profile
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
@@ -14,7 +14,17 @@ class NoteSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["first_name", "last_name", "username", "email"]
+        fields = ["first_name", "last_name", "email", "date_joined"]
+        extra_kwargs = {
+            "email": {"read_only": True},
+            "date_joined": {"read_only": True},
+        }
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ["user", "image"]
 
 
 class RegisterSerializer(serializers.ModelSerializer):

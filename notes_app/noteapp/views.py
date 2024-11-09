@@ -1,12 +1,13 @@
 from noteapp.serializers import (
     NoteSerializer,
     UserSerializer,
+    ProfileSerializer,
     RegisterSerializer,
     LoginSerializer,
 )
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
-from noteapp.models import Note
+from noteapp.models import Note, Profile
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
@@ -34,13 +35,38 @@ def login_view(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(["GET"])
+@api_view(["GET", "PUT"])
 @permission_classes([IsAuthenticated])
-def get_user_profile_view(request):
+def user_details_view(request):
     try:
         user = request.user
         serializer = UserSerializer(user)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        if request.method == "GET":
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        elif request.method == "PUT":
+            serializer = UserSerializer(user, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["GET", "PUT"])
+@permission_classes([IsAuthenticated])
+def profile_view(request):
+    try:
+        profile, created = Profile.objects.get_or_create(user=request.user)
+        if request.method == "GET":
+            serializer = ProfileSerializer(profile)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        elif request.method == "PUT":
+            serializer = ProfileSerializer(profile, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -67,7 +93,7 @@ def search_notes_view(request):
         return Response(
             {"error": "Search query is required"}, status=status.HTTP_400_BAD_REQUEST
         )
-    
+
     notes = Note.objects.filter(
         Q(title__icontains=query)
         | Q(body__icontains=query)

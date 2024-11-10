@@ -58,8 +58,8 @@ def user_details_view(request):
 def profile_view(request):
     try:
         profile, created = Profile.objects.get_or_create(user=request.user)
+        serializer = ProfileSerializer(profile)
         if request.method == "GET":
-            serializer = ProfileSerializer(profile)
             return Response(serializer.data, status=status.HTTP_200_OK)
         elif request.method == "PUT":
             serializer = ProfileSerializer(profile, data=request.data, partial=True)
@@ -67,6 +67,8 @@ def profile_view(request):
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Profile.DoesNotExist:
+        return Response({"error": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

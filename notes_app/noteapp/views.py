@@ -53,7 +53,7 @@ def user_details_view(request):
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(["GET", "PUT"])
+@api_view(["GET", "PUT", "DELETE"])
 @permission_classes([IsAuthenticated])
 def profile_view(request):
     try:
@@ -67,8 +67,22 @@ def profile_view(request):
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        elif request.method == "DELETE":
+            if profile.image:
+                profile.delete()
+                profile.image = None
+                profile.save()
+                return Response(
+                    {"message": "Profile deleted successfully"},
+                    status=status.HTTP_200_OK,
+                )
+            return Response(
+                {"error": "No Profile pic found"}, status=status.HTTP_404_NOT_FOUND
+            )
     except Profile.DoesNotExist:
-        return Response({"error": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response(
+            {"error": "Profile not found"}, status=status.HTTP_404_NOT_FOUND
+        )
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

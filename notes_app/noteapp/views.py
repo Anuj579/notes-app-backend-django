@@ -26,6 +26,31 @@ def register_view(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_user_view(request):
+    try:
+        user = request.user
+        password = request.data.get("password")
+
+        if not password:
+            return Response(
+                {"error": "Password is required"}, status=status.HTTP_501_NOT_IMPLEMENTED
+            )
+
+        if not user.check_password(password):
+            return Response(
+                {"error": "Invalid password"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.delete()
+        return Response(
+            {"message": "User deleted successfully"}, status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 @api_view(["POST"])
 def login_view(request):
     serializer = LoginSerializer(data=request.data)

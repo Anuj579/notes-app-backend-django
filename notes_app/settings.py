@@ -30,7 +30,7 @@ SECRET_KEY = "django-insecure-44%tu*3ln_e=x@*&i3t9pko#)7x+(#*w1i-2gq(v&2qw562g+(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["notesapi-ulk5.onrender.com", "127.0.0.1", "localhost"]
+ALLOWED_HOSTS = ["notesapi-ulk5.onrender.com", "127.0.0.1", "localhost", "noteworthyonline.netlify.app"]
 
 
 # Application definition
@@ -83,6 +83,7 @@ WSGI_APPLICATION = "notes_app.wsgi.application"
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "https://noteworthyonline.netlify.app/"
 ]
 
 # For authentication using JWT

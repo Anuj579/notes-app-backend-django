@@ -94,7 +94,6 @@ def profile_view(request):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         elif request.method == "DELETE":
             if profile.image:
-                profile.delete()
                 profile.image = None
                 profile.save()
                 return Response(

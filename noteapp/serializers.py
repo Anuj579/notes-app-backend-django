@@ -22,9 +22,19 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    image_url = (
+        serializers.SerializerMethodField()
+    )  # Calls a custom method to get data for this field, not directly from the model
+
     class Meta:
         model = Profile
-        fields = ["user", "image"]
+        fields = ["user", "image", "image_url"]
+        read_only_fields = ["user"]
+
+    def get_image_url(self, obj):
+        if obj.image:  # Checks if an image exists
+            return obj.image.url  # Generates the full URL
+        return None  # Return empty string instead of None for consistency
 
 
 class RegisterSerializer(serializers.ModelSerializer):

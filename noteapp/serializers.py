@@ -33,7 +33,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     def get_image_url(self, obj):
         if obj.image:  # Checks if an image exists
-            return obj.image.url  # Generates the full URL
+            return obj.image.url.replace("http://", "https://")  # Generates the full URL
         return None  # Return empty string instead of None for consistency
 
 

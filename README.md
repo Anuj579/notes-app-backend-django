@@ -77,7 +77,7 @@ python manage.py runserver
 | **GET**  | `/notes/<slug>/`        | Retrieve details of a specific note       |
 | **PUT**  | `/notes/<slug>/`        | Update a specific note                    |
 | **DELETE** | `/notes/<slug>/`      | Delete a specific note                    |
-| **GET**  | `/notes-search/?q=`     | Search notes by title or content          |
+| **GET**  | `/notes-search/?search=<query>` | Search notes by title or content  |
 
 ### 🔍 Example Usage
 To access protected routes, include the `Authorization` header with your JWT token:

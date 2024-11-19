@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
 from django.db.models import Q
+from django.http import JsonResponse
 
 
 # Create your views here.
@@ -35,7 +36,8 @@ def delete_user_view(request):
 
         if not password:
             return Response(
-                {"error": "Password is required"}, status=status.HTTP_501_NOT_IMPLEMENTED
+                {"error": "Password is required"},
+                status=status.HTTP_501_NOT_IMPLEMENTED,
             )
 
         if not user.check_password(password):
@@ -191,3 +193,7 @@ def note_detail_view(request, slug):
         return Response(
             {"message": "Note deleted successfully"}, status=status.HTTP_204_NO_CONTENT
         )
+
+
+def health_check_view(request):
+    return JsonResponse({"status": "OK"})

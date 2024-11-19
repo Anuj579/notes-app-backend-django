@@ -9,6 +9,7 @@ from noteapp.views import (
     user_details_view,
     profile_view,
     logout_view,
+    health_check_view
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -23,4 +24,5 @@ urlpatterns = [
     path("notes/", notes_view, name="notes"),
     path("notes/<slug:slug>/", note_detail_view, name="note_detail"),
     path("notes-search/", search_notes_view, name="notes-search"),
+    path("health/", health_check_view, name="health-check"),
 ]

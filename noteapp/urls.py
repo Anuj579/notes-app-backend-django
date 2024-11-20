@@ -9,6 +9,9 @@ from noteapp.views import (
     user_details_view,
     profile_view,
     logout_view,
+    send_password_reset_email_view,
+    validate_reset_token_view,
+    reset_password_view,
     health_check_view
 )
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -24,5 +27,8 @@ urlpatterns = [
     path("notes/", notes_view, name="notes"),
     path("notes/<slug:slug>/", note_detail_view, name="note_detail"),
     path("notes-search/", search_notes_view, name="notes-search"),
+    path('send-password-reset-email/', send_password_reset_email_view, name='password_reset_email'),
+    path('validate-token/<int:uid>/<str:token>/', validate_reset_token_view, name='validate_token'),
+    path('reset-password/<int:uid>/<str:token>/', reset_password_view, name='reset_password'),
     path("health/", health_check_view, name="health-check"),
 ]

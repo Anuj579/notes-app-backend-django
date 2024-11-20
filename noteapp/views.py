@@ -8,11 +8,18 @@ from noteapp.serializers import (
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 from noteapp.models import Note, Profile
+from django.contrib.auth.models import User
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
 from django.db.models import Q
 from django.http import JsonResponse
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.conf import settings
+from django.core.mail import send_mail
+from datetime import datetime, timedelta
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
 
 
 # Create your views here.
@@ -193,6 +200,107 @@ def note_detail_view(request, slug):
         return Response(
             {"message": "Note deleted successfully"}, status=status.HTTP_204_NO_CONTENT
         )
+
+
+TOKEN_EXPIRATION_MINUTES = 10
+
+
+def is_token_expired(user, token):
+    token_generator = PasswordResetTokenGenerator()
+    # Decode the timestamp from the token
+    timestamp = token_generator._num_seconds(token_generator._get_timestamp(user))
+    token_creation_time = datetime.fromtimestamp(timestamp)
+    # Check if the token has expired
+    return datetime.now() > token_creation_time + timedelta(
+        minutes=TOKEN_EXPIRATION_MINUTES
+    )
+
+
+@api_view(["POST"])
+def send_password_reset_email_view(request):
+    email = request.data.get("email")
+    if not email:
+        return JsonResponse(
+            {"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        return JsonResponse(
+            {"error": "User with this email does not exist."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    token_generator = PasswordResetTokenGenerator()
+    token = token_generator.make_token(user)
+    reset_url = f"{settings.FRONTEND_URL}/reset-password/{user.pk}/{token}"
+
+    send_mail(
+        subject="Password Reset Request",
+        message=f"""
+Click the link below to reset your NoteWorthy account password:
+
+{reset_url}
+
+This link will expire in {TOKEN_EXPIRATION_MINUTES} minutes. If you did not request this reset, please ignore this email.
+""",
+        from_email=settings.EMAIL_HOST_USER,
+        recipient_list=[email],
+        fail_silently=False,
+    )
+
+    return JsonResponse(
+        {"message": "Password reset email sent successfully"}, status=status.HTTP_200_OK
+    )
+
+
+@api_view(["GET"])
+def validate_reset_token_view(request, uid, token):
+    try:
+        user = User.objects.get(pk=uid)
+    except User.DoesNotExist:
+        return JsonResponse(
+            {"error": "User does not exist"}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    token_generator = PasswordResetTokenGenerator()
+    if not token_generator.check_token(user, token) or is_token_expired(user, token):
+        return JsonResponse(
+            {"error": "Token is invalid or expired."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    return JsonResponse({"detail": "Token is valid."}, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def reset_password_view(request, uid, token):
+    new_password = request.data.get("new_password")
+    if not new_password:
+        return JsonResponse(
+            {"error": "New password is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        user = User.objects.get(pk=uid)
+    except User.DoesNotExist:
+        return JsonResponse(
+            {"error": "User does not exist"}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    token_generator = PasswordResetTokenGenerator()
+    if not token_generator.check_token(user, token) or is_token_expired(user, token):
+        return JsonResponse(
+            {"error": "Token is invalid or expired."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    user.set_password(new_password)
+    user.save()
+    return JsonResponse(
+        {"detail": "Password reset successfully."}, status=status.HTTP_200_OK
+    )
 
 
 def health_check_view(request):

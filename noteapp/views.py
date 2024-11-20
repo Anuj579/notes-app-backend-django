@@ -17,9 +17,8 @@ from django.http import JsonResponse
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.conf import settings
 from django.core.mail import send_mail
+from django.utils import timezone
 from datetime import datetime, timedelta
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes, force_str
 
 
 # Create your views here.
@@ -202,18 +201,10 @@ def note_detail_view(request, slug):
         )
 
 
-TOKEN_EXPIRATION_MINUTES = 10
-
-
-def is_token_expired(user, token):
-    token_generator = PasswordResetTokenGenerator()
-    # Decode the timestamp from the token
-    timestamp = token_generator._num_seconds(token_generator._get_timestamp(user))
-    token_creation_time = datetime.fromtimestamp(timestamp)
-    # Check if the token has expired
-    return datetime.now() > token_creation_time + timedelta(
-        minutes=TOKEN_EXPIRATION_MINUTES
-    )
+class CustomPasswordResetTokenGenerator(PasswordResetTokenGenerator):
+    # Override the `get_token_expiry` method to set the expiration time
+    def _get_token_expiry(self, user):
+        return timezone.now() + timedelta(minutes=10)
 
 
 @api_view(["POST"])
@@ -243,7 +234,7 @@ Click the link below to reset your NoteWorthy account password:
 
 {reset_url}
 
-This link will expire in {TOKEN_EXPIRATION_MINUTES} minutes. If you did not request this reset, please ignore this email.
+This link will expire in 10 minutes. If you did not request this reset, please ignore this email.
 """,
         from_email=settings.EMAIL_HOST_USER,
         recipient_list=[email],
@@ -264,13 +255,17 @@ def validate_reset_token_view(request, uid, token):
             {"error": "User does not exist"}, status=status.HTTP_404_NOT_FOUND
         )
 
+    # Create a token generator
     token_generator = PasswordResetTokenGenerator()
-    if not token_generator.check_token(user, token) or is_token_expired(user, token):
+
+    # Check if the token is valid and not expired
+    if not token_generator.check_token(user, token):
         return JsonResponse(
             {"error": "Token is invalid or expired."},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    # If the token is valid and not expired
     return JsonResponse({"detail": "Token is valid."}, status=status.HTTP_200_OK)
 
 
@@ -290,7 +285,7 @@ def reset_password_view(request, uid, token):
         )
 
     token_generator = PasswordResetTokenGenerator()
-    if not token_generator.check_token(user, token) or is_token_expired(user, token):
+    if not token_generator.check_token(user, token):
         return JsonResponse(
             {"error": "Token is invalid or expired."},
             status=status.HTTP_400_BAD_REQUEST,
